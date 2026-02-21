@@ -7,6 +7,7 @@ from Patterns.Singelton import LoggerSingelton
 
 from functools import wraps
 
+
 def find_and_load_env(filename=consts.filename, key_name=consts.key_name):
     for root, dirs, files in os.walk(os.getcwd()):
         if filename in files:
@@ -30,12 +31,3 @@ def call_apifreellm(api_key, builder):
         json=builder
     )
     return response.status_code, response.json()
-
-
-api_key = find_and_load_env()
-if not api_key:
-    raise ValueError("API key not found")
-
-status, result = call_apifreellm(api_key, "Hello, 2+2=?")
-print(status)
-print(result)

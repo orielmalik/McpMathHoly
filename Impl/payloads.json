@@ -1,0 +1,43 @@
+[
+  {
+    "name": "solve_equation_1",
+    "operation": "math",
+    "payload": {
+      "type": "solve",
+      "message": ["2*x + 1 = 10"],
+      "timestamp": "2026-02-21T21:00:00"
+    }
+  },
+  {
+    "name": "expression_simple",
+    "operation": "math",
+    "payload": {
+      "type": "expression",
+      "message": ["2*x + 3*x"]
+    }
+  },
+  {
+    "name": "matrix_determinant",
+    "operation": "math",
+    "payload": {
+      "type": "matrix_det",
+      "message": ["1 2", "3 4"]
+    }
+  },
+  {
+    "name": "matrix_eigen",
+    "operation": "math",
+    "payload": {
+      "type": "matrix_eig",
+      "message": ["2 0", "0 3"]
+    }
+  },
+  {
+    "name": "motion_problem",
+    "operation": "math",
+    "payload": {
+      "type": "motion",
+      "message": ["0", "10", "5"]
+    }
+  }
+]

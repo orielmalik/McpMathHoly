@@ -1,53 +1,62 @@
 from datetime import datetime
-from typing import Any, Dict, Optional, Callable, List
+from typing import Any, Dict, Optional, Callable
 
-from httpx import URL
+from httpx import URL, Response
 
-from Patterns.Singelton.AsyncSingelton import AsyncClientSingleton
+from Patterns.Decorator.decorators import auto_error_logger
+from Patterns.Singelton import LoggerSingelton
+from Patterns.Singelton.AsyncClientSingelton import AsyncClientSingleton
 
 
 class AsyncURIBuilder:
     def __init__(self, base_url: str):
-        self.base_url = URL(base_url)
+        self.base_url = URL(base_url.rstrip("/"))
         self.client = AsyncClientSingleton.get_client(base_url)
 
+    @auto_error_logger
     async def request(
         self,
-        endpoint: str,
         method: str,
+        endpoint: str,
         path_vars: Optional[Dict[str, Any]] = None,
         query_params: Optional[Dict[str, Any]] = None,
-        json_body: Optional[Dict[str, Any]] = None
+        json_body: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        # טיפול ב-path variables
         if path_vars:
-            for k, v in path_vars.items():
-                placeholder = f"{{{k}}}"
+            for key, value in path_vars.items():
+                placeholder = f"{{{key}}}"
                 if placeholder in endpoint:
-                    endpoint = endpoint.replace(placeholder, str(v))
+                    endpoint = endpoint.replace(placeholder, str(value))
                 else:
-                    raise ValueError(f"Path variable '{k}' not found in endpoint")
+                    raise ValueError(f"Path variable '{key}' not found in endpoint: {endpoint}")
 
-        url = self.base_url / endpoint
+        # בניית URL מלא
+        full_url = self.base_url.join(URL(endpoint.lstrip("/")))
 
-        # Query params
         if query_params:
-            url = url.with_query(query_params)
+            full_url = full_url.with_query(query_params)
 
-        # Send request
-        response = await self.client.request(method=method, url=url, json=json_body)
+        # שליחת הבקשה
+        response: Response = await self.client.request(
+            method=method.upper(),
+            url=full_url,
+            json=json_body,
+        )
+
+        # לוג תמידי (גם אם נכשל)
+        LoggerSingelton.printer(
+            "INFO",
+            f"{method.upper()} {full_url} | body={json_body} | status={response.status_code}"
+        )
+
         response.raise_for_status()
-        data = response.json()
 
-        # Logging
-        self.log_request(url, method, json_body, data)
+        try:
+            data = response.json()
+        except Exception:
+            data = {"raw_content": response.text[:200] + "..."}
+
         return data
 
-    def log_request(self, url, method, body, response_data):
-        log_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "method": method,
-            "url": str(url),
-            "body": body,
-            "response": response_data
-        }
-        #print(json.dumps(log_entry, ensure_ascii=False))
+

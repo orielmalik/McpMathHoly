@@ -1,45 +1,86 @@
 from abc import ABC, abstractmethod
+from typing import List, Optional
 import numpy as np
-from sympy import symbols, sympify, Eq, solve
+from sympy import symbols, sympify, Eq, solve, sympify as sp_sympify
 
 
 class MathStrategy(ABC):
     @abstractmethod
-    def exec(self, data):
+    def exec(self, message: List[str]):
+        """Executes strategy on a list of strings"""
         pass
 
 
 class ExpressionStrategy(MathStrategy):
-    def exec(self, data):
-        expr = sympify(data)
-        return expr
+    def exec(self, message: List[str]):
+        if not message or not message[0]:
+            raise ValueError("Missing expression")
+        expr_str = message[0]
+        return {"expression": str(sp_sympify(expr_str))}
 
 
 class SolveEquationStrategy(MathStrategy):
-    def exec(self, data):
-        equations = [sympify(eq) for eq in data['equations']]
-        vars = symbols(data.get('variables', None))
-        return solve(equations, vars)
+    def exec(self, message: List[str], variables: Optional[List[str]] = None):
+        if not message:
+            raise ValueError("Missing equations")
+
+        equations = []
+        all_symbols = set()
+
+        for raw in message:
+            raw = raw.strip()
+            if "=" in raw:
+                left, right = raw.split("=", 1)
+                lhs = sp_sympify(left.strip())
+                rhs = sp_sympify(right.strip())
+                equations.append(Eq(lhs, rhs))
+                all_symbols.update(lhs.free_symbols | rhs.free_symbols)
+            else:
+                expr = sp_sympify(raw)
+                equations.append(expr)
+                all_symbols.update(expr.free_symbols)
+
+        if variables:
+            vars_to_solve = symbols(variables)
+        else:
+            vars_to_solve = list(all_symbols) if all_symbols else None
+
+        solutions = solve(equations, vars_to_solve, dict=True)
+        return {"solutions": solutions}
 
 
 class MatrixDeterminantStrategy(MathStrategy):
-    def exec(self, data):
-        matrix = np.array(data)
-        return np.linalg.det(matrix)
+    def exec(self, message: List[str]):
+        if not message:
+            raise ValueError("Missing matrix data")
+        matrix = np.array([list(map(float, row.split())) for row in message])
+        det = np.linalg.det(matrix)
+        return {"determinant": float(det)}
 
 
 class MatrixDiagonalizeStrategy(MathStrategy):
-    def exec(self, data):
-        matrix = np.array(data)
-        return np.linalg.eig(matrix)
+    def exec(self, message: List[str]):
+        if not message:
+            raise ValueError("Missing matrix data")
+        matrix = np.array([list(map(float, row.split())) for row in message])
+        eigenvalues, eigenvectors = np.linalg.eig(matrix)
+        return {
+            "eigenvalues": eigenvalues.tolist(),
+            "eigenvectors": eigenvectors.tolist()
+        }
 
 
 class MotionProblemStrategy(MathStrategy):
-    def exec(self, data):
-        v0 = data.get('v0', 0)
-        a = data.get('a', 0)
-        t = data.get('t', 0)
-        return v0 + a * t
-
-
-
+    def exec(self, message: List[str]):
+        # נניח שהסדר: v0, a, t
+        if not message or len(message) < 3:
+            raise ValueError("Missing motion parameters (v0, a, t)")
+        v0 = float(message[0])
+        a  = float(message[1])
+        t  = float(message[2])
+        vf = v0 + a * t
+        s  = v0 * t + 0.5 * a * t**2
+        return {
+            "final_velocity": vf,
+            "distance": s
+        }
