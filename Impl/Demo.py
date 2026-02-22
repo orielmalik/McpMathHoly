@@ -1,6 +1,3 @@
-# execute_direct.py
-
-from Models.models import ActionRequest
 from Patterns.Factory.CommandFactory import CommandFactory
 from Patterns.Template.ErrorTemplate import AppErrors
 from Utils.CustomException import APIException
@@ -13,6 +10,7 @@ PAYLOADS_FILE = "payloads.json"
 def execute_sync(operation: str, req: ActionRequest):
     try:
         result = CommandFactory.invoke(operation, req)
+        print(req.dict())
         if result is None:
             raise AppErrors.not_found(f"Operation '{operation}' not found")
 

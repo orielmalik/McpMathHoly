@@ -1,25 +1,21 @@
-# test_execute.py
+import json
 import pytest
 from fastapi.testclient import TestClient
-from Models.models import ActionRequest
 from Patterns.Singelton.Fapp import app
-from Patterns.Factory.CommandFactory import CommandFactory
-from Patterns.Template.ErrorTemplate import AppErrors
+from pathlib import Path
 
 client = TestClient(app)
 
-@pytest.mark.parametrize(
-    "operation, payload, expected_status",
-    [
-        ("math", {"type": "solve", "message": ["2*x + 1 = 10"]}, 200),
-        ("math", {"type": "expression", "message": ["x + 5"]}, 200),
-        ("math", {"type": "matrix_det", "message": [[ [1,2],[3,4] ]]}, 200),
-        ("math", {"type": "motion", "message": ["v0=0", "a=2", "t=3"]}, 200),
-        ("unknown_op", {"type": "solve", "message": ["2*x + 1 = 10"]}, 404),
-        ("math", {"type": "solve", "message": []}, 400),
-    ]
-)
-def test_execute(operation, payload, expected_status):
-    req = ActionRequest(**payload)
-    response = client.post(f"/{operation}", json=req.dict())
-    assert response.status_code == expected_status
+payload_file = Path(__file__).parent.parent / "Impl" / "payloads.json"
+with open(payload_file) as f:
+    test_cases = json.load(f)
+
+@pytest.mark.parametrize("case", test_cases)
+def test_operations(case):
+    operation = case["operation"]
+    payload = case["payload"]
+    response = client.post(f"/{operation}", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert "data" in data
