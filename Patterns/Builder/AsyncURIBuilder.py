@@ -22,7 +22,6 @@ class AsyncURIBuilder:
         query_params: Optional[Dict[str, Any]] = None,
         json_body: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        # טיפול ב-path variables
         if path_vars:
             for key, value in path_vars.items():
                 placeholder = f"{{{key}}}"
@@ -31,7 +30,6 @@ class AsyncURIBuilder:
                 else:
                     raise ValueError(f"Path variable '{key}' not found in endpoint: {endpoint}")
 
-        # בניית URL מלא
         full_url = self.base_url.join(URL(endpoint.lstrip("/")))
 
         if query_params:

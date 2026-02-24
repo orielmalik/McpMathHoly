@@ -1,5 +1,7 @@
 model = "deepseek/deepseek-r1-0528:free",
 allow = ["*"]
+mcptitle="notonlymathtool"
+apptitle="mathholy"
 filename = "../k.env"
 key_name = "ap"
 apf_url="https://apifreellm.com/api/v1/chat",

@@ -1,4 +1,6 @@
-from fastapi import Path, Body
+from fastapi import Path, Body, Depends
+
+from Patterns.Adapter import LLMAdapter
 from Patterns.Factory.CommandFactory import CommandFactory
 from Models.models import ActionRequest
 from Patterns.Decorator.decorators import auto_error_logger
@@ -11,7 +13,8 @@ from Utils.CustomException import APIException
 @app.post("/{operation}")
 async def execute(
         operation: str = Path(..., description="Operation name"),
-        req: ActionRequest = Body(...)
+        req: ActionRequest = Body(...),
+        llm: LLMAdapter = Depends(get_llm_adapter)
 ):
     try:
         result = CommandFactory.invoke(operation, req)

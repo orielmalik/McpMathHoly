@@ -1,12 +1,13 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from Patterns.Template.ErrorTemplate import APIException  # המחלקה שלך
+from Patterns.Template.ErrorTemplate import APIException
 from fastapi import FastAPI, Path
 from fastapi.middleware.cors import CORSMiddleware
+from fastmcp import FastMCP
+from Utils.consts import allow, apptitle
 
-from Utils.consts import allow
-
-app = FastAPI(title="MCP Math Tools Server")
+app = FastAPI(title=apptitle)
+mcpapp=FastMCP()
 
 app.add_middleware(
     CORSMiddleware,

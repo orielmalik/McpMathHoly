@@ -3,6 +3,7 @@ from typing import Callable, Any
 from Patterns.Builder import AsyncURIBuilder
 from Patterns.Singelton import LoggerSingelton
 
+
 class AsyncPipeline:
     def __init__(self, builder: AsyncURIBuilder):
         self.builder = builder
