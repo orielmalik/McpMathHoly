@@ -1,5 +1,6 @@
 from Patterns.Builder import AsyncURIBuilder, AsyncPipeline
 from Patterns.Singelton import LoggerSingelton
+from Utils import consts
 
 
 class FreeLLMAdapter:
@@ -9,7 +10,7 @@ class FreeLLMAdapter:
         self.pipeline = AsyncPipeline(self.builder)
         self.pipeline.add_step(self._send_request)
 
-    async def _send_request(self, builder: AsyncURIBuilder, prompt: str):
+    async def _send_request(self, builder: AsyncURIBuilder, prompt=consts.DEFAULT_PROMPT):
         response = await builder.request(
             method="POST",
             endpoint="",
