@@ -1,62 +1,47 @@
-from Patterns.Factory.CommandFactory import CommandFactory
-from Patterns.Template.ErrorTemplate import AppErrors
-from Utils.CustomException import APIException
-import json
+# demo.py
+import asyncio
 from Models.models import ActionRequest
-
-PAYLOADS_FILE = "payloads.json"
-
-
-def execute_sync(operation: str, req: ActionRequest):
-    try:
-        result = CommandFactory.invoke(operation, req)
-        print(req.dict())
-        if result is None:
-            raise AppErrors.not_found(f"Operation '{operation}' not found")
-
-        return {
-            "status": "success",
-            "data": result
-        }
-
-    except APIException as e:
-        raise e
-    except Exception as e:
-        raise AppErrors.bad_request(str(e))
+from Patterns.Singelton import LoggerSingelton
+from Patterns.Adapter.LLMAdapter import FreeLLMAdapter
+from Patterns.Adapter.McpClientAdapter import MCPClientAdapter
+from Utils.consts import mcptitle
+from fappsetting.appDependency import get_llm_adapter
 
 
-with open(PAYLOADS_FILE, "r", encoding="utf-8") as f:
-    payloads = json.load(f)
+async def main():
+    llm = get_llm_adapter()
+    mcp_client = MCPClientAdapter(server_url="https://demo-mcp-server.com")
 
-for idx, item in enumerate(payloads, start=1):
-    operation = item.get("operation", "math")
-    payload_data = item.get("payload", {})
+    test_actions = [
+        ActionRequest(
+            type="MATHCOMMAND",
+            message=["2 + 2", "5 * 7"],
+            timestamp="2026-03-08T16:00:00"
+        ),
+        ActionRequest(
+            type="MATHCOMMAND",
+            message=["sqrt(16)", "log(100)"],
+            timestamp="2026-03-08T16:01:00"
+        ),
+        ActionRequest(
+            type="MATHCOMMAND",
+            message=["integrate x^2 dx from 0 to 3"],
+            timestamp="2026-03-08T16:02:00"
+        )
+    ]
 
-    try:
-        req = ActionRequest(**payload_data)
-        result = execute_sync(operation, req)
-        print(f"Test {idx} Success:", result)
-    except Exception as e:
-        print(f"Test {idx} Failed:", e)
+    for action in test_actions:
+        LoggerSingelton.printer("INFO", f"Sending action to LLM & MCP: {action}")
+        llm_response = await llm.ask(action)
+        LoggerSingelton.printer("INFO", f"LLM Response: {llm_response.json()}")
+
+        if llm_response.result and "tool_name" in llm_response.result:
+            tool_name = llm_response.result["tool_name"]
+            result = await mcp_client.call_tool(tool_name=tool_name, action=action)
+            LoggerSingelton.printer("INFO", f"MCP Tool Result: {result}")
+        else:
+            LoggerSingelton.printer("INFO", f"Direct Answer from LLM: {llm_response.result}")
+
 
 if __name__ == "__main__":
-    req1 = ActionRequest(
-        type="solve",
-        message=["2*x + 2 = 10"],
-        timestamp="2026-02-21T21:00:00"
-    )
-    try:
-        res = execute_sync("math", req1)
-        print("Test 1 Success:", res)
-    except Exception as e:
-        print("Test 1 Failed:", e)
-
-    req2 = ActionRequest(
-        type="solve",
-        message=["2*x + 2 = 10"]
-    )
-    try:
-        res = execute_sync("unknown_op", req2)
-        print("Test 2 Success:", res)
-    except Exception as e:
-        print("Test 2 Failed:", e)
+    asyncio.run(main())

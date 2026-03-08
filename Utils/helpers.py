@@ -2,6 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
+from Patterns.Singelton.Fappmcp import Fappmcp
 from Utils import consts
 from Patterns.Singelton import LoggerSingelton
 
@@ -31,3 +32,12 @@ def call_apifreellm(api_key, builder):
         json=builder
     )
     return response.status_code, response.json()
+
+def build_tools_prompt():
+
+    tools = Fappmcp.list_tools()
+    lines = []
+    for name in tools:
+        lines.append(f"- {name}")
+
+    return "\n".join(lines)

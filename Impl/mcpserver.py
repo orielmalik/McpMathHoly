@@ -11,5 +11,6 @@ def execute_action(action: JsonRpcRequest) -> Dict[str, Any]:
     message = action.params.message
     timestamp = action.params.timestamp
 
+
     LoggerSingelton.printer("INFO", f"Action: {action_type} at {timestamp}")
     raise ValueError(f"Unknown action type: {action_type}")

@@ -15,12 +15,13 @@ class AsyncURIBuilder:
 
     @auto_error_logger
     async def request(
-        self,
-        method: str,
-        endpoint: str,
-        path_vars: Optional[Dict[str, Any]] = None,
-        query_params: Optional[Dict[str, Any]] = None,
-        json_body: Optional[Dict[str, Any]] = None,
+            self,
+            method: str,
+            endpoint: str,
+            path_vars: Optional[Dict[str, Any]] = None,
+            query_params: Optional[Dict[str, Any]] = None,
+            json_body: Optional[Dict[str, Any]] = None,
+            headers: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         if path_vars:
             for key, value in path_vars.items():
@@ -35,14 +36,13 @@ class AsyncURIBuilder:
         if query_params:
             full_url = full_url.with_query(query_params)
 
-        # שליחת הבקשה
         response: Response = await self.client.request(
             method=method.upper(),
             url=full_url,
             json=json_body,
+            headers=headers
         )
 
-        # לוג תמידי (גם אם נכשל)
         LoggerSingelton.printer(
             "INFO",
             f"{method.upper()} {full_url} | body={json_body} | status={response.status_code}"

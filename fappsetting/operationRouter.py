@@ -16,11 +16,12 @@ router = APIRouter()
 async def execute(
         operation: str = Path(..., description="Operation name"),
         req: ActionRequest = Body(...),
-        llm: LLMAdapter = Depends(get_llm_adapter),
+        llm: FreeLLMAdapter = Depends(get_llm_adapter),
         meta_data=Depends(get_request_meta)
 ):
     try:
-        # TODO: invoke command
+        llm.ask()
+        # invoke command
         result = MCPClientAdapter(meta_data["origin"]).call_tool(tool_name="execute_action", action=req)
         if result is None:
             raise AppErrors.not_found(f"Operation '{operation}' not found")

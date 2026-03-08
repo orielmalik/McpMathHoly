@@ -1,9 +1,14 @@
+import os
+
 from fastapi import Request
-from Patterns.Adapter import LLMAdapter
+from Patterns.Adapter.LLMAdapter import FreeLLMAdapter
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path="K.ENV")
 
 
-def get_llm_adapter() -> LLMAdapter:
-    return LLMAdapter()
+def get_llm_adapter() -> FreeLLMAdapter:
+    return FreeLLMAdapter(api_key=os.environ.get("API_KEY"), api_url=os.environ.get("API_URL"))
 
 
 def get_request_meta(request: Request):
