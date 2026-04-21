@@ -2,29 +2,43 @@ from typing import Any
 from Models.models import ActionRequest, JsonRpcRequest, JsonRpcResponse
 from Patterns.Builder import AsyncURIBuilder, AsyncPipeline
 from Patterns.Singelton import LoggerSingelton
+from Patterns.Template.ErrorTemplate import AppErrors
 from Utils import consts
 import json
+from groq import AsyncGroq, GroqError, APIStatusError, RateLimitError
+from Utils.helpers import find_and_load_env
+import asyncio
+
+
+class GroqService:
+
+    async def safe_groq_call(self, prompt, retries=3):
+        for attempt in range(retries):
+            try:
+                return await self.client.chat.completions.create(
+                    model=consts.model,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+
+            except RateLimitError:
+                if attempt == retries - 1:
+                    raise AppErrors.rate_limit()
+
+                await asyncio.sleep(2 ** attempt)  # exponential backoff
+
+            except APIStatusError as e:
+                raise GroqErrorHandler.handle(e)
+
+            except GroqError:
+                raise AppErrors.internal(" server err AI")
+
 
 class FreeLLMAdapter:
     def __init__(self, api_key: str, api_url: str):
         self.api_key = api_key
+        self.groq = GroqService(api_key=find_and_load_env(key_name=consts.api_key))
         self.builder = AsyncURIBuilder.AsyncURIBuilder(api_url)
         self.pipeline = AsyncPipeline.AsyncPipeline(self.builder)
-        self.pipeline.add_step(self._send_request)
-
-    async def _send_request(self, builder: AsyncURIBuilder, payload: dict):
-        response = await builder.request(
-            method="POST",
-            endpoint="",
-            json_body=payload,
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-        )
-        if "text" not in response:
-            raise Exception(f"LLM returned invalid response: {response}")
-        return response["text"]
 
     async def ask(self, action: ActionRequest) -> JsonRpcResponse:
         user_messages = "\n".join(action.message or [])

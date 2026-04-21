@@ -2,15 +2,13 @@
 import asyncio
 from Models.models import ActionRequest
 from Patterns.Singelton import LoggerSingelton
-from Patterns.Adapter.LLMAdapter import FreeLLMAdapter
 from Patterns.Adapter.McpClientAdapter import MCPClientAdapter
-from Utils.consts import mcptitle
 from fappsetting.appDependency import get_llm_adapter
 
 
 async def main():
     llm = get_llm_adapter()
-    mcp_client = MCPClientAdapter(server_url="https://demo-mcp-server.com")
+    mcp_client = MCPClientAdapter()
 
     test_actions = [
         ActionRequest(

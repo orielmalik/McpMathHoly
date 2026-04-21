@@ -6,9 +6,8 @@ from Patterns.Strategy.MathStrategy import ExpressionStrategy, SolveEquationStra
 
 
 class CommandFactory:
-
     @staticmethod
-    def invoke(action_type: str,req:ActionRequest) -> OperationCommand:
+    def invoke(action_type: str, req: ActionRequest) -> OperationCommand:
         if action_type == "math":
             return MathCommand().invoke(req)
         else:

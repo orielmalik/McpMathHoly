@@ -7,7 +7,6 @@ from Patterns.Template.ErrorTemplate import AppErrors
 from Utils.CustomException import APIException
 from fappsetting.appDependency import *
 
-
 router = APIRouter()
 
 
@@ -20,8 +19,7 @@ async def execute(
         meta_data=Depends(get_request_meta)
 ):
     try:
-        llm.ask()
-        # invoke command
+        target = await llm.ask(action=req)
         result = MCPClientAdapter(meta_data["origin"]).call_tool(tool_name="execute_action", action=req)
         if result is None:
             raise AppErrors.not_found(f"Operation '{operation}' not found")

@@ -1,24 +1,26 @@
 import os
 import requests
-from dotenv import load_dotenv
 
 from Patterns.Singelton.Fappmcp import Fappmcp
 from Utils import consts
 from Patterns.Singelton import LoggerSingelton
 
 from functools import wraps
+from pathlib import Path
+from dotenv import load_dotenv
+import os
 
 
-def find_and_load_env(filename=consts.filename, key_name=consts.key_name):
-    for root, dirs, files in os.walk(os.getcwd()):
-        if filename in files:
-            filepath = os.path.join(root, filename)
-            load_dotenv(filepath)
-            api_key = os.getenv(key_name)
-            if api_key:
-                return api_key.strip()
-            else:
-                return None
+def find_and_load_env(key_name, filename=consts.filename):
+    current = Path(__file__).resolve()
+
+    for parent in current.parents:
+        candidate = parent / filename
+        if candidate.exists():
+            load_dotenv(candidate)
+            kk = os.getenv(key_name)
+            return kk.strip() if kk else None
+
     return None
 
 
@@ -33,8 +35,8 @@ def call_apifreellm(api_key, builder):
     )
     return response.status_code, response.json()
 
-def build_tools_prompt():
 
+def build_tools_prompt():
     tools = Fappmcp.list_tools()
     lines = []
     for name in tools:

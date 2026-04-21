@@ -1,10 +1,6 @@
 import os
-
 from fastapi import Request
 from Patterns.Adapter.LLMAdapter import FreeLLMAdapter
-from dotenv import load_dotenv
-
-load_dotenv(dotenv_path="K.ENV")
 
 
 def get_llm_adapter() -> FreeLLMAdapter:

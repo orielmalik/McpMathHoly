@@ -1,8 +1,9 @@
-model = "deepseek/deepseek-r1-0528:free",
 allow = ["*"]
+model="llama3-8b-8192"
 mcptitle="notonlymathtool"
 apptitle="mathholy"
-filename = "../k.env"
+filename = "k.env"
+api_key = "API_KEY"
 SYSTEM_PROMPT = f"""
 You are part of an advanced scientific AI system.
 

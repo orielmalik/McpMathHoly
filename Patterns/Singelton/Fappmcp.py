@@ -1,7 +1,5 @@
 from fastmcp import FastMCP
 from Utils.consts import mcptitle
-
-
 class Fappmcp:
     _instance: FastMCP | None = None
 
