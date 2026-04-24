@@ -15,7 +15,7 @@ router = APIRouter()
 async def execute(
         operation: str = Path(..., description="Operation name"),
         req: ActionRequest = Body(...),
-        llm: FreeLLMAdapter = Depends(get_llm_adapter),
+        llm: GroqLLMAdapter = Depends(get_llm_adapter),
         meta_data=Depends(get_request_meta)
 ):
     try:

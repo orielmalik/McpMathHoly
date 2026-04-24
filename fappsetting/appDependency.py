@@ -1,10 +1,11 @@
 import os
 from fastapi import Request
-from Patterns.Adapter.LLMAdapter import FreeLLMAdapter
+from Patterns.Adapter.LLMAdapter import GroqLLMAdapter
+from Utils.helpers import find_and_load_env
 
 
-def get_llm_adapter() -> FreeLLMAdapter:
-    return FreeLLMAdapter(api_key=os.environ.get("API_KEY"), api_url=os.environ.get("API_URL"))
+def get_llm_adapter() -> GroqLLMAdapter:
+    return GroqLLMAdapter(api_key=find_and_load_env(key_name="API_KEY",filename="k.env"))
 
 
 def get_request_meta(request: Request):

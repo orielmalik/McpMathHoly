@@ -1,6 +1,5 @@
 from Patterns.Strategy import MathStrategy
 
-
 class Context:
     def __init__(self, strategy: MathStrategy):
         self._strategy = strategy

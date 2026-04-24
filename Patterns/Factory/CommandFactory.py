@@ -1,14 +1,14 @@
+from typing import List
+
 from Models.models import ActionRequest
 from Patterns.Command.Commands import OperationCommand, MathCommand
-from Patterns.Strategy import MathStrategy
-from Patterns.Strategy.MathStrategy import ExpressionStrategy, SolveEquationStrategy, MatrixDeterminantStrategy, \
-    MatrixDiagonalizeStrategy, MotionProblemStrategy
+from Patterns.Singelton import LoggerSingelton
 
 
 class CommandFactory:
     @staticmethod
     def invoke(action_type: str, req: ActionRequest) -> OperationCommand:
-        if action_type == "math":
+        if action_type.startswith("math_"):
             return MathCommand().invoke(req)
         else:
             return None

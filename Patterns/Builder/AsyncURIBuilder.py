@@ -10,7 +10,7 @@ from Patterns.Singelton.AsyncClientSingelton import AsyncClientSingleton
 
 class AsyncURIBuilder:
     def __init__(self, base_url: str):
-        self.base_url = URL(base_url.rstrip("/"))
+        self.base_url = URL(str(base_url).rstrip("/"))
         self.client = AsyncClientSingleton.get_client(base_url)
 
     @auto_error_logger

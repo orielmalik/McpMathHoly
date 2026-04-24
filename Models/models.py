@@ -2,18 +2,16 @@ from pydantic import BaseModel
 from typing import List, Optional, Any
 
 
+class ToolCall(BaseModel):
+    tool_name: str
+    operation: Optional[str] = None
+    args: dict = {}
+
+
 class ActionRequest(BaseModel):
     type: str
-    message: Optional[List[str]] = None
+    message: str
     timestamp: Optional[str] = None
-
-
-class JsonRpcRequest(BaseModel):
-    jsonrpc: str
-    method: str
-    params: ActionRequest
-    id: int | str
-
 
 class JsonRpcError(BaseModel):
     code: int
@@ -22,6 +20,18 @@ class JsonRpcError(BaseModel):
 
 class JsonRpcResponse(BaseModel):
     jsonrpc: str = "2.0"
-    result: Any | None = None
-    error: JsonRpcError | None = None
+    result: Optional[ToolCall | dict | str] = None
+    error: Optional[JsonRpcError] = None
     id: int | str | None = None
+
+
+class JsonRpcRequest(BaseModel):
+    jsonrpc: str
+    method: str
+    params: ActionRequest
+    id: int | str
+
+class Action(BaseModel):
+    name: str
+    operation: str
+    payload: ActionRequest

@@ -1,23 +1,44 @@
-from typing import Any
-from Models.models import ActionRequest, JsonRpcRequest, JsonRpcResponse
-from Patterns.Builder import AsyncURIBuilder, AsyncPipeline
+from Models.models import ActionRequest,  JsonRpcResponse
+from Patterns.Builder import AsyncPipeline,AsyncURIBuilder
+from Patterns.Factory import CommandFactory
 from Patterns.Singelton import LoggerSingelton
 from Patterns.Template.ErrorTemplate import AppErrors
-from Utils import consts
+from Utils import consts, helpers
 import json
-from groq import AsyncGroq, GroqError, APIStatusError, RateLimitError
-from Utils.helpers import find_and_load_env
+from groq import GroqError, APIStatusError, RateLimitError
+
+from Utils.Errors import GroqErrorHandler
 import asyncio
+from groq import AsyncGroq
+
+from Utils.consts import BASE_PROMPT, ACTION_PROMPT
 
 
 class GroqService:
+    _instances = {}
 
-    async def safe_groq_call(self, prompt, retries=3):
+    def __new__(cls, api_keyy: str):
+        if api_keyy not in cls._instances:
+            instance = super().__new__(cls)
+            cls._instances[api_keyy] = instance
+        return cls._instances[api_keyy]
+
+    def __init__(self, api_keyy: str):
+        if getattr(self, "_initialized", False):
+            return
+
+        self.api_key = api_keyy
+        self.client = AsyncGroq(api_key=api_keyy)
+
+        self._initialized = True
+
+    async def safe_groq_call(self, messag, retries=3):
+
         for attempt in range(retries):
             try:
                 return await self.client.chat.completions.create(
                     model=consts.model,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=messag
                 )
 
             except RateLimitError:
@@ -32,43 +53,55 @@ class GroqService:
             except GroqError:
                 raise AppErrors.internal(" server err AI")
 
-
-class FreeLLMAdapter:
-    def __init__(self, api_key: str, api_url: str):
+class GroqLLMAdapter:
+    def __init__(self, api_key: str):
         self.api_key = api_key
-        self.groq = GroqService(api_key=find_and_load_env(key_name=consts.api_key))
-        self.builder = AsyncURIBuilder.AsyncURIBuilder(api_url)
-        self.pipeline = AsyncPipeline.AsyncPipeline(self.builder)
+        self.groq = GroqService(api_keyy=api_key)
 
-    async def ask(self, action: ActionRequest) -> JsonRpcResponse:
-        user_messages = "\n".join(action.message or [])
-        full_prompt = f"""
-    {consts.SYSTEM_PROMPT}
-    Action Type: {action.type}
-    Messages:
-    {user_messages}
-    
-    {consts.DEFAULT_PROMPT}
-    """
-        payload = {
-            "prompt": full_prompt
-        }
-        LoggerSingelton.printer("DEBUG", f"Sending prompt to LLM: {payload}")
-        llm_text = await self.pipeline.run(payload)
+    async def ask(self, full_prompt) -> JsonRpcResponse:
+        messages = [
+            {"role": "system", "content": BASE_PROMPT + ACTION_PROMPT},
+            {"role": "user",   "content": str(full_prompt)}
+        ]
+
+        llm_response = await self.groq.safe_groq_call(messages)
+        llm_text = llm_response.choices[0].message.content
+
+        LoggerSingelton.printer("INFO", f"Router response: {llm_text}")
+
+        # נקה markdown אם יש
+        clean = llm_text.strip().strip("```json").strip("```").strip()
 
         try:
-            parsed = json.loads(llm_text)
-            if not isinstance(parsed, dict):
-                raise ValueError("Parsed response is not a dict")
-            return JsonRpcResponse(
-                jsonrpc="2.0",
-                result=parsed,
-                id=action.timestamp or 1
-            )
+            parsed = json.loads(clean)
         except json.JSONDecodeError:
-            return JsonRpcResponse(
-                jsonrpc="2.0",
-                error=None,
-                result={"text": llm_text},
-                id=action.timestamp or 1
-            )
+            parsed = {"tool": None, "operation": None, "message": ""}
+
+        return JsonRpcResponse(
+            jsonrpc="2.0",
+            result=parsed,
+            id=hash(full_prompt) % 100000
+        )
+    async def solve(self, full_prompt) -> JsonRpcResponse:
+        messages = [
+            {"role": "system", "content": "You are a math solver. Solve the problem and return only the answer as JSON: {\"result\": ...}"},
+            {"role": "user",   "content": str(full_prompt)}
+        ]
+
+        llm_response = await self.groq.safe_groq_call(messages)
+        llm_text = llm_response.choices[0].message.content
+
+        LoggerSingelton.printer("INFO", f"Solver response: {llm_text}")
+
+        clean = llm_text.strip().strip("```json").strip("```").strip()
+
+        try:
+            parsed = json.loads(clean)
+        except json.JSONDecodeError:
+            parsed = {"result": llm_text}
+
+        return JsonRpcResponse(
+            jsonrpc="2.0",
+            result=parsed,
+            id=hash(full_prompt) % 100000
+        )
