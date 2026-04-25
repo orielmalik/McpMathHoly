@@ -68,12 +68,12 @@ class PandasSDK:
         plt.figure()
         self.df["operation"].value_counts().plot(kind="bar")
         plt.title("Operations")
-        plt.savefig("operations.png")
+        plt.savefig("res/operations.png")
 
         plt.figure()
         self.df.groupby("operation")["latency"].mean().plot(kind="bar")
         plt.title("Latency")
-        plt.savefig("latency.png")
+        plt.savefig("res/latency.png")
 
 
 

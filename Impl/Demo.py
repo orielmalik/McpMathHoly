@@ -14,7 +14,7 @@ async def main():
     llm = get_llm_adapter()
     mcp = MCPClientMock()
 
-    test_actions = helpers.load_actions_from_json("payloads.json")
+    test_actions = helpers.load_actions_from_json("../Tests/payloads.json")
 
     analytics_batch = []
 

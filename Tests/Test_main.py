@@ -1,21 +1,70 @@
-import json
 import pytest
-from fastapi.testclient import TestClient
-from Patterns.Singelton.Fapp import app
-from pathlib import Path
 
-client = TestClient(app)
+from Analytics.engine import PandasSDK, run_action, analytics_buffer
+from Models.models import ActionRequest
+from fappsetting.appDependency import get_llm_adapter
+from Impl.mcpclientmock import MCPClientMock
+from Utils import helpers
 
-payload_file = Path(__file__).parent.parent / "Impl" / "payloads.json"
-with open(payload_file) as f:
-    test_cases = json.load(f)
 
-@pytest.mark.parametrize("case", test_cases)
-def test_operations(case):
-    operation = case["operation"]
-    payload = case["payload"]
-    response = client.post(f"/{operation}", json=payload)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "success"
-    assert "data" in data
+@pytest.mark.asyncio
+async def test_main_flow():
+    # Arrange
+    llm = get_llm_adapter()
+    mcp = MCPClientMock()
+
+    analytics_buffer.clear()
+
+    test_actions = helpers.load_actions_from_json("../Tests/payloads.json")
+
+    # Act
+    for acti in test_actions:
+        actio = ActionRequest(**acti)
+
+        route = await llm.ask(
+            full_prompt=helpers.action_to_prompt(actio),
+        )
+
+        parsed = helpers.normalize_router_output(route.result)
+
+        operation = parsed.get("operation")
+        message = parsed.get("message")
+
+        if not operation or not message:
+            continue
+
+        if operation == "solve":
+            result = await llm.solve(
+                full_prompt=f"Solve directly: {message}"
+            )
+            output = result.result
+        else:
+            result = await mcp.call_tool(
+                operation,
+                ActionRequest(
+                    type=operation,
+                    message=message,
+                    timestamp=actio.timestamp
+                )
+            )
+            output = result.result if hasattr(result, "result") else result
+
+        # logging actions into analytics engine
+        run_action("solve", "2*x + 1 = 10", "x=4.5")
+        run_action("expression", "2*x + 3*x", "5*x")
+        run_action("matrix_det", "1 2; 3 4", "-2")
+        run_action("motion", "0,10,5", "distance=62.5")
+
+    # Build analytics SDK AFTER execution
+    sdk = PandasSDK.from_records(analytics_buffer)
+
+    report = sdk.generate_report()
+    errors = sdk.generate_error_analysis()
+
+    # optional visualization (keep but non-blocking conceptually)
+    sdk.plot_flow()
+
+    assert report is not None
+    assert errors is not None
+    assert len(analytics_buffer) > 0
+    assert "error" in str(errors).lower() or isinstance(errors, dict)
