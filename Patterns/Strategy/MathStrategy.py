@@ -6,10 +6,6 @@ from typing import List, Dict, Any
 import re
 
 
-
-
-
-
 class MathStrategy(ABC):
     @abstractmethod
     def exec(self, message: List[str], **kwargs) -> Dict[str, Any]:
@@ -87,7 +83,7 @@ class MotionProblemStrategy(MathStrategy):
         a = float(message[1])
         t = float(message[2])
         vf = v0 + a * t
-        s = v0 * t + 0.5 * a * t**2
+        s = v0 * t + 0.5 * a * t ** 2
         return {
             "final_velocity": vf,
             "distance": s

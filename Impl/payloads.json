@@ -1,7 +1,7 @@
 [
   {
     "type": "math_solve",
-    "message": "2*x + 1 = 10",
+    "message": "2*x + 100 = 10",
     "timestamp": "2026-02-21T21:00:00"
   },
   {
@@ -10,14 +10,10 @@
   },
   {
     "type": "math_matrix_det",
-    "message": "1 2; 3 4"
+    "message": "1 2; 9 4"
   },
   {
     "type": "math_matrix_eig",
     "message": "2 0; 0 3"
-  },
-  {
-    "type": "math_motion",
-    "message": "0,10,5"
   }
 ]

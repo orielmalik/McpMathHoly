@@ -29,7 +29,14 @@ SCHEMA (STRICT):
   "message": "string"
 }
 
-RULES:
+You MUST verify every mathematical result using the tool.
+
+Rules:
+- You MAY attempt a solution
+- You MUST call the operation to verify,especially at solve operation
+- If tool result differs → use tool result
+- Final answer MUST match tool output
+- Never return unchecked math
 - Output EXACTLY one JSON object
 - NO explanations
 - NO markdown

@@ -1,4 +1,6 @@
+from Patterns.Singelton import LoggerSingelton
 from Patterns.Strategy import MathStrategy
+
 
 class Context:
     def __init__(self, strategy: MathStrategy):
@@ -15,4 +17,5 @@ class Context:
         self._strategy = strategy
 
     def run(self, data):
+        LoggerSingelton.printer("INFO",f"Math data{data} ")
         return self._strategy.exec(data)
