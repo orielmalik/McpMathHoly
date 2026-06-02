@@ -11,7 +11,6 @@ class MathStrategy(ABC):
     def exec(self, message: List[str], **kwargs) -> Dict[str, Any]:
         pass
 
-
 class ExpressionStrategy(MathStrategy):
     def exec(self, message: List[str], **kwargs):
         if not message or not message[0]:

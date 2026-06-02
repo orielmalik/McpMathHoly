@@ -60,8 +60,6 @@ async def test_main_flow():
 
     report = sdk.generate_report()
     errors = sdk.generate_error_analysis()
-
-    # optional visualization (keep but non-blocking conceptually)
     sdk.plot_flow()
 
     assert report is not None

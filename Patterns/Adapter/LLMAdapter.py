@@ -69,7 +69,6 @@ class GroqLLMAdapter:
 
         LoggerSingelton.printer("INFO", f"Router response: {llm_text}")
 
-        # נקה markdown אם יש
         clean = llm_text.strip().strip("```json").strip("```").strip()
 
         try:

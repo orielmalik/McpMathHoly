@@ -1,12 +1,12 @@
 [
   {
     "type": "math_solve",
-    "message": "2*x + 100 = 10",
+    "message": "2*x - 23 = 10",
     "timestamp": "2026-02-21T21:00:00"
   },
   {
     "type": "math_expression",
-    "message": "2*x + 3*x"
+    "message": "9*x + 3*x"
   },
   {
     "type": "math_matrix_det",
@@ -14,6 +14,6 @@
   },
   {
     "type": "math_matrix_eig",
-    "message": "2 0; 0 3"
+    "message": "2 0; 9 3"
   }
 ]
